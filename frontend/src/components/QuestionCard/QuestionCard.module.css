@@ -1,0 +1,103 @@
+/* Shared list card for questions (Dashboard / My Questions / Similar). */
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.card:focus {
+  outline: none;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.cardExcerpt {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-line;
+}
+
+.cardTitle mark,
+.cardExcerpt mark {
+  background-color: rgba(250, 204, 21, 0.4);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.cardMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cardArrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.125rem;
+  color: var(--text-placeholder);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.card:hover .cardArrow {
+  color: var(--primary);
+  border-color: var(--primary);
+  background-color: var(--primary-light);
+}

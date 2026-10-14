@@ -1,0 +1,35 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badgeMd {
+  font-size: 0.74rem;
+  padding: 3px 10px;
+}
+
+.badgeOwner {
+  background: var(--primary-light, #ffedd5);
+  color: var(--primary-dark, #c2410c);
+  border: 1px solid var(--primary-light, #ffedd5);
+}
+
+.badgeAdmin {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ede9fe;
+}
+
+.badgeUser {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}

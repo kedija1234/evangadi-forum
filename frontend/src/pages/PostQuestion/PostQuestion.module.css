@@ -1,0 +1,240 @@
+/* Post Question page styles. */
+
+.postQuestion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.postQuestionIntro {
+  max-width: 40rem;
+}
+
+.postQuestionTitle {
+  margin: 0 0 var(--spacing-xs);
+  font-size: var(--text-2xl);
+}
+
+.postQuestionSubtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.postQuestionForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-width: 46rem;
+  padding: var(--spacing-xl);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 767.98px) {
+  .postQuestionForm {
+    padding: var(--spacing-md);
+  }
+}
+
+.postQuestionField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.postQuestionLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+}
+
+.postQuestionInput,
+.postQuestionTextarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.postQuestionInput:hover,
+.postQuestionTextarea:hover {
+  border-color: var(--border-hover);
+}
+
+.postQuestionTextarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.postQuestionHint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-placeholder);
+}
+
+.postQuestionError,
+.postQuestionSuccess {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  border-radius: var(--radius-md);
+}
+
+.postQuestionError {
+  color: #dc2626;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.postQuestionSuccess {
+  color: #16a34a;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.postQuestionActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.postQuestionCoach,
+.postQuestionSubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.2rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.postQuestionCoach {
+  color: var(--primary-dark);
+  background-color: var(--primary-light);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.postQuestionCoach:hover:not(:disabled) {
+  background-color: #ffedd5;
+}
+
+.postQuestionSubmit {
+  color: var(--text-inverse);
+  background-color: var(--primary);
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.postQuestionSubmit:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.postQuestionCoach:disabled,
+.postQuestionSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.postQuestionCoach:focus,
+.postQuestionSubmit:focus {
+  outline: none;
+}
+
+.postQuestionCoach:focus-visible,
+.postQuestionSubmit:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.postQuestionSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--primary-light);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: postQuestionSpin 0.8s linear infinite;
+}
+
+@keyframes postQuestionSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.postQuestionCoachPanel {
+  max-width: 46rem;
+  padding: var(--spacing-lg);
+  background-color: var(--primary-light);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: var(--radius-lg);
+}
+
+.postQuestionCoachHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.postQuestionCoachIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--primary-dark);
+  background-color: var(--surface);
+  border-radius: var(--radius-full);
+}
+
+.postQuestionCoachTitle {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.postQuestionCoachFeedback {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.postQuestionCoachTips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.postQuestionCoachTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.postQuestionCoachTip svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--primary);
+}
