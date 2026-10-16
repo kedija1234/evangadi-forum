@@ -1,11 +1,11 @@
-import { safeExecute } from '../../../../db/config.js';
-import { NotFoundError } from '../../../utils/errors/index.js';
+import { safeExecute } from "../../../../db/config.js";
+import { NotFoundError } from "../../../utils/errors/index.js";
 import {
   cosineSimilarity,
   parseEmbedding,
   generateHexHash,
-} from '../../../utils/vector.js';
-import { embedText } from '../../../services/gemini.service.js';
+} from "../../../utils/vector.js";
+import { embedText } from "../../../services/gemini.service.js";
 
 // gemini-embedding-001 scores related content ~0.5-0.74 and unrelated ~0.3-0.7,
 // so a strict threshold like 0.75 filters out everything. Keep the default low.
@@ -19,7 +19,8 @@ const SEMANTIC_SEARCH_THRESHOLD =
 const SEMANTIC_SEARCH_K = Number(process.env.SEMANTIC_SEARCH_K) || 2;
 const RECOMMEND_K = Number(process.env.RECOMMEND_K) || 10;
 const DEFAULT_ANSWERS_LIMIT = 100;
-const DEFAULT_QUESTIONS_PAGE_SIZE = Number(process.env.QUESTIONS_PAGE_SIZE) || 10;
+const DEFAULT_QUESTIONS_PAGE_SIZE =
+  Number(process.env.QUESTIONS_PAGE_SIZE) || 10;
 
 /**
  * Thread ranking blends AI relevance (cosine of question↔answer embeddings)
@@ -46,9 +47,9 @@ const ANSWER_MODERATE_MIN = Number(process.env.ANSWER_MODERATE_MIN) || 0.45;
  */
 function gradeFromScore(score) {
   if (!Number.isFinite(score) || score <= 0) return null;
-  if (score >= ANSWER_GOOD_MIN) return 'Good';
-  if (score >= ANSWER_MODERATE_MIN) return 'Moderate';
-  return 'Low';
+  if (score >= ANSWER_GOOD_MIN) return "Good";
+  if (score >= ANSWER_MODERATE_MIN) return "Moderate";
+  return "Low";
 }
 
 /**
@@ -67,7 +68,7 @@ function mapQuestionRow(row) {
       id: row.user_id,
       firstName: row.first_name,
       lastName: row.last_name,
-      role: row.role || 'user',
+      role: row.role || "user",
     },
   };
 }
@@ -98,16 +99,18 @@ async function hydrateQuestionDetails(ids) {
     FROM questions q
     JOIN users u ON u.user_id = q.user_id
     LEFT JOIN answers a ON a.question_id = q.question_id
-    WHERE q.question_id IN (${ids.map(() => '?').join(',')})
+    WHERE q.question_id IN (${ids.map(() => "?").join(",")})
     GROUP BY
       q.question_id, q.question_hash, q.title, q.content,
       q.created_at, q.updated_at, u.user_id, u.first_name, u.last_name, u.role
   `;
 
   const rows = await safeExecute(sql, ids);
-  const byId = new Map(rows.map(row => [row.question_id, mapQuestionRow(row)]));
+  const byId = new Map(
+    rows.map((row) => [row.question_id, mapQuestionRow(row)]),
+  );
 
-  return ids.map(id => byId.get(id)).filter(Boolean);
+  return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
 /**
@@ -119,11 +122,15 @@ async function hydrateQuestionDetails(ids) {
  * @param {number} input.userId - Authenticated user id.
  * @returns {Promise<Object>} Question summary with the generated hash.
  */
-export const createQuestionWithVectorService = async ({ title, content, userId }) => {
+export const createQuestionWithVectorService = async ({
+  title,
+  content,
+  userId,
+}) => {
   const questionHash = generateHexHash(16);
 
   const insertSql =
-    'INSERT INTO questions (question_hash, user_id, title, content) VALUES (?, ?, ?, ?)';
+    "INSERT INTO questions (question_hash, user_id, title, content) VALUES (?, ?, ?, ?)";
   const insertResult = await safeExecute(insertSql, [
     questionHash,
     userId,
@@ -135,24 +142,24 @@ export const createQuestionWithVectorService = async ({ title, content, userId }
   const sourceText = `${title}\n\n${content}`;
 
   try {
-    const vector = await embedText(sourceText, 'RETRIEVAL_DOCUMENT');
+    const vector = await embedText(sourceText, "RETRIEVAL_DOCUMENT");
     const vectorSql =
-      'INSERT INTO question_vectors (question_id, source_text, embedding, status) VALUES (?, ?, ?, ?)';
+      "INSERT INTO question_vectors (question_id, source_text, embedding, status) VALUES (?, ?, ?, ?)";
     await safeExecute(vectorSql, [
       questionId,
       sourceText,
       JSON.stringify(vector),
-      'ready',
+      "ready",
     ]);
   } catch (_error) {
     // Embedding failure should not block question creation; record it instead.
     const vectorSql =
-      'INSERT INTO question_vectors (question_id, source_text, embedding, status) VALUES (?, ?, ?, ?)';
+      "INSERT INTO question_vectors (question_id, source_text, embedding, status) VALUES (?, ?, ?, ?)";
     await safeExecute(vectorSql, [
       questionId,
       sourceText,
       JSON.stringify([]),
-      'failed',
+      "failed",
     ]);
   }
 
@@ -183,19 +190,25 @@ export const getQuestionsService = async ({
 
   if (search && search.trim()) {
     const term = `%${search.trim()}%`;
-    conditions.push('(q.title LIKE ? OR q.content LIKE ?)');
+    conditions.push("(q.title LIKE ? OR q.content LIKE ?)");
     params.push(term, term);
   }
 
-  if (mine === 'true' || mine === '1' || mine === true) {
-    conditions.push('q.user_id = ?');
+  if (mine === "true" || mine === "1" || mine === true) {
+    conditions.push("q.user_id = ?");
     params.push(userId);
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const safePage = Math.max(1, Number(page) || 1);
-  const safeLimit = Math.min(50, Math.max(1, Number(limit) || DEFAULT_QUESTIONS_PAGE_SIZE));
+  // Whole numbers only: safe to place directly in the query (TiDB does not
+  // accept ? placeholders after LIMIT / OFFSET).
+  const safePage = Math.max(1, Math.trunc(Number(page)) || 1);
+  const safeLimit = Math.min(
+    50,
+    Math.max(1, Math.trunc(Number(limit)) || DEFAULT_QUESTIONS_PAGE_SIZE),
+  );
   const offset = (safePage - 1) * safeLimit;
 
   const countSql = `
@@ -228,10 +241,10 @@ export const getQuestionsService = async ({
       q.question_id, q.question_hash, q.title, q.content,
       q.created_at, q.updated_at, u.user_id, u.first_name, u.last_name, u.role
     ORDER BY q.created_at DESC
-    LIMIT ? OFFSET ?
+    LIMIT ${safeLimit} OFFSET ${offset}
   `;
 
-  const rows = await safeExecute(sql, [...params, safeLimit, offset]);
+  const rows = await safeExecute(sql, params);
 
   return {
     data: rows.map(mapQuestionRow),
@@ -240,8 +253,8 @@ export const getQuestionsService = async ({
       limit: safeLimit,
       total,
       totalPages: total > 0 ? Math.ceil(total / safeLimit) : 0,
-      sortBy: 'newest',
-      sortOrder: 'desc',
+      sortBy: "newest",
+      sortOrder: "desc",
     },
   };
 };
@@ -266,7 +279,7 @@ async function computeAnswerAiScores(questionId, answerIds) {
   const questionVector = parseEmbedding(questionVectorRows[0].embedding);
   if (questionVector.length === 0) return new Map();
 
-  const placeholders = answerIds.map(() => '?').join(',');
+  const placeholders = answerIds.map(() => "?").join(",");
   const answerVectorSql = `
     SELECT answer_id, embedding
     FROM answer_vectors
@@ -275,7 +288,7 @@ async function computeAnswerAiScores(questionId, answerIds) {
   const answerVectorRows = await safeExecute(answerVectorSql, answerIds);
 
   return new Map(
-    answerVectorRows.map(row => [
+    answerVectorRows.map((row) => [
       row.answer_id,
       cosineSimilarity(questionVector, parseEmbedding(row.embedding)),
     ]),
@@ -290,13 +303,14 @@ async function computeAnswerAiScores(questionId, answerIds) {
  * @param {Array} answers - Answer objects (mutated in place).
  */
 function rankAnswers(answers) {
-  const votes = answers.map(answer => answer.voteCount);
+  const votes = answers.map((answer) => answer.voteCount);
   const maxVote = Math.max(...votes, 0);
   const minVote = Math.min(...votes, 0);
   const range = maxVote - minVote;
 
-  answers.forEach(answer => {
-    const normalizedVote = range > 0 ? (answer.voteCount - minVote) / range : 0.5;
+  answers.forEach((answer) => {
+    const normalizedVote =
+      range > 0 ? (answer.voteCount - minVote) / range : 0.5;
     answer.combinedScore =
       ANSWER_RANK_AI_WEIGHT * answer.aiScore +
       ANSWER_RANK_VOTE_WEIGHT * normalizedVote;
@@ -348,19 +362,23 @@ export const getSingleQuestionService = async (
   const questionRows = await safeExecute(questionSql, [questionHash]);
 
   if (questionRows.length === 0) {
-    throw new NotFoundError('Question not found');
+    throw new NotFoundError("Question not found");
   }
 
   const questionRow = questionRows[0];
 
   const countRows = await safeExecute(
-    'SELECT COUNT(*) AS total FROM answers WHERE question_id = ?',
+    "SELECT COUNT(*) AS total FROM answers WHERE question_id = ?",
     [questionRow.question_id],
   );
   const total = Number(countRows[0]?.total) || 0;
 
-  const safePage = Math.max(1, Number(page) || 1);
-  const safeLimit = Math.min(100, Math.max(1, Number(limit) || DEFAULT_ANSWERS_LIMIT));
+  // Whole numbers only: safe to place directly in the query.
+  const safePage = Math.max(1, Math.trunc(Number(page)) || 1);
+  const safeLimit = Math.min(
+    100,
+    Math.max(1, Math.trunc(Number(limit)) || DEFAULT_ANSWERS_LIMIT),
+  );
   const offset = (safePage - 1) * safeLimit;
 
   const answersSql = `
@@ -388,17 +406,15 @@ export const getSingleQuestionService = async (
       a.answer_id, a.question_id, a.content, a.created_at, a.updated_at,
       u.user_id, u.first_name, u.last_name, u.role, av.ai_grade
     ORDER BY a.created_at ASC
-    LIMIT ? OFFSET ?
+    LIMIT ${safeLimit} OFFSET ${offset}
   `;
 
   const answerRows = await safeExecute(answersSql, [
     userId,
     questionRow.question_id,
-    safeLimit,
-    offset,
   ]);
 
-  const answers = answerRows.map(row => ({
+  const answers = answerRows.map((row) => ({
     id: row.answer_id,
     content: row.content,
     createdAt: row.created_at,
@@ -415,7 +431,7 @@ export const getSingleQuestionService = async (
       id: row.user_id,
       firstName: row.first_name,
       lastName: row.last_name,
-      role: row.role || 'user',
+      role: row.role || "user",
     },
   }));
 
@@ -424,9 +440,9 @@ export const getSingleQuestionService = async (
   if (answers.length > 0) {
     const aiScores = await computeAnswerAiScores(
       questionRow.question_id,
-      answers.map(answer => answer.id),
+      answers.map((answer) => answer.id),
     );
-    answers.forEach(answer => {
+    answers.forEach((answer) => {
       const score = Math.max(0, aiScores.get(answer.id) ?? 0);
       answer.aiScore = score;
       if (!answer.aiGrade) {
@@ -449,7 +465,7 @@ export const getSingleQuestionService = async (
         id: questionRow.user_id,
         firstName: questionRow.first_name,
         lastName: questionRow.last_name,
-        role: questionRow.role || 'user',
+        role: questionRow.role || "user",
       },
     },
     answers,
@@ -471,16 +487,19 @@ export const getSingleQuestionService = async (
  */
 export const getDashboardStatsService = async ({ userId }) => {
   const [totalQuestions] = await safeExecute(
-    'SELECT COUNT(*) AS n FROM questions',
+    "SELECT COUNT(*) AS n FROM questions",
     [],
   );
-  const [totalReplies] = await safeExecute('SELECT COUNT(*) AS n FROM answers', []);
+  const [totalReplies] = await safeExecute(
+    "SELECT COUNT(*) AS n FROM answers",
+    [],
+  );
   const [answeredQuestions] = await safeExecute(
-    'SELECT COUNT(DISTINCT question_id) AS n FROM answers',
+    "SELECT COUNT(DISTINCT question_id) AS n FROM answers",
     [],
   );
   const [myQuestions] = await safeExecute(
-    'SELECT COUNT(*) AS n FROM questions WHERE user_id = ?',
+    "SELECT COUNT(*) AS n FROM questions WHERE user_id = ?",
     [userId],
   );
 
@@ -506,33 +525,37 @@ export const searchQuestionsSemanticService = async ({
   k = SEMANTIC_SEARCH_K,
   threshold = SEMANTIC_SEARCH_THRESHOLD,
 }) => {
-  const queryVector = await embedText(query, 'RETRIEVAL_QUERY');
+  const queryVector = await embedText(query, "RETRIEVAL_QUERY");
 
   const vectorSql =
     "SELECT question_id, embedding FROM question_vectors WHERE status = 'ready'";
   const vectorRows = await safeExecute(vectorSql, []);
 
   const scored = vectorRows
-    .map(row => ({
+    .map((row) => ({
       questionId: row.question_id,
       score: cosineSimilarity(queryVector, parseEmbedding(row.embedding)),
     }))
-    .filter(item => item.score >= threshold)
+    .filter((item) => item.score >= threshold)
     .sort((a, b) => b.score - a.score)
     .slice(0, k);
 
   console.log(
     `[Semantic search] vectors=${vectorRows.length} queryDim=${queryVector.length} threshold=${threshold} k=${k} topScores=${scored
       .slice(0, 5)
-      .map(item => item.score.toFixed(4))
-      .join(', ')}`,
+      .map((item) => item.score.toFixed(4))
+      .join(", ")}`,
   );
 
-  const data = await hydrateQuestionDetails(scored.map(item => item.questionId));
-  const scoreById = new Map(scored.map(item => [item.questionId, item.score]));
+  const data = await hydrateQuestionDetails(
+    scored.map((item) => item.questionId),
+  );
+  const scoreById = new Map(
+    scored.map((item) => [item.questionId, item.score]),
+  );
 
   return {
-    data: data.map(question => ({
+    data: data.map((question) => ({
       ...question,
       score: scoreById.get(question.id) ?? 0,
     })),
@@ -571,14 +594,17 @@ export const getSimilarQuestionsService = async ({
   const sourceRows = await safeExecute(sourceSql, [questionHash]);
 
   if (sourceRows.length === 0) {
-    throw new NotFoundError('Question not found');
+    throw new NotFoundError("Question not found");
   }
 
   const sourceId = sourceRows[0].question_id;
   const sourceVector = parseEmbedding(sourceRows[0].embedding);
 
   if (sourceVector.length === 0) {
-    return { data: [], meta: { total: 0, k, threshold, query: null, questionHash } };
+    return {
+      data: [],
+      meta: { total: 0, k, threshold, query: null, questionHash },
+    };
   }
 
   const vectorSql =
@@ -586,19 +612,23 @@ export const getSimilarQuestionsService = async ({
   const vectorRows = await safeExecute(vectorSql, [sourceId]);
 
   const scored = vectorRows
-    .map(row => ({
+    .map((row) => ({
       questionId: row.question_id,
       score: cosineSimilarity(sourceVector, parseEmbedding(row.embedding)),
     }))
-    .filter(item => item.score >= threshold)
+    .filter((item) => item.score >= threshold)
     .sort((a, b) => b.score - a.score)
     .slice(0, k);
 
-  const data = await hydrateQuestionDetails(scored.map(item => item.questionId));
-  const scoreById = new Map(scored.map(item => [item.questionId, item.score]));
+  const data = await hydrateQuestionDetails(
+    scored.map((item) => item.questionId),
+  );
+  const scoreById = new Map(
+    scored.map((item) => [item.questionId, item.score]),
+  );
 
   return {
-    data: data.map(question => ({
+    data: data.map((question) => ({
       ...question,
       score: scoreById.get(question.id) ?? 0,
     })),
